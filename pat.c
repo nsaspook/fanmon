@@ -50,7 +50,7 @@
 
 
 /*
- * Driver E220 fan sensor
+ * Driver for E220 fan sensor
  * std input 52hz at full speed 
  * Version
  * 0.1  detect pulses and flash fan failure lamps if RPM is out of spec
@@ -113,15 +113,15 @@ void tm_handler(void) // timer/serial functions are handled here
 		INTCONbits.INT0IF = FALSE;
 		V.spin_count0++;
 		V.sleep_ticks = OFF;
-		RPMLED = !RPMLED;
+		//		RPMLED = !RPMLED;
 	}
 
-	if (INTCON3bits.INT1IF) {
+	if (INTCON3bits.INT2IF) {
 		V.valid = TRUE;
-		INTCON3bits.INT1IF = FALSE;
+		INTCON3bits.INT2IF = FALSE;
 		V.spin_count1++;
 		V.sleep_ticks = OFF;
-		RPMLED = !RPMLED;
+		//		RPMLED = !RPMLED;
 	}
 
 	if (PIR1bits.RCIF) { // is data from RS-232 port
@@ -134,18 +134,26 @@ void tm_handler(void) // timer/serial functions are handled here
 		V.comm = TRUE;
 	}
 
-	if (PIR1bits.TMR1IF) { //      Timer1 int handler for RPM frequency generator
+	if (PIR1bits.TMR1IF) { //      Timer1 int handler PWM lamp effects
 		V.valid = TRUE;
+
+		V.spinning = TRUE; //Testing
+
 		PIR1bits.TMR1IF = FALSE; //      clear int flag
-		if (V.slew_freq < V.sample_freq) V.slew_freq += 10;
-		if (V.slew_freq > V.sample_freq) V.slew_freq--;
-		WriteTimer1(V.slew_freq); // this can change for ramp up/down simulation
-		if (V.spinning) {
-			RPMOUT = !RPMOUT; // generate the high speed motor timing pulses
-		} else {
-			V.slew_freq = SAMPLEFREQ_R;
+		WriteTimer1(V.sample_freq);
+
+		if (LEDS.out_bits.b1 || TRUE) {
+			if (V.led_pwm[1]++ >= V.led_pwm_set[1])
+				LED1 = LEDON;
+			if (!V.led_pwm[1]) LED1 = LEDOFF; // LED OFF
 		}
-		V.hi_rez++;
+
+		if (LEDS.out_bits.b2 || TRUE) {
+			if (V.led_pwm[2]++ >= V.led_pwm_set[2])
+				LED2 = LEDON;
+			if (!V.led_pwm[2]) LED2 = LEDOFF; // LED OFF
+		}
+		RPMLED = !RPMLED;
 	}
 
 	if (INTCONbits.TMR0IF) { //      check timer0 irq time timer
@@ -153,47 +161,21 @@ void tm_handler(void) // timer/serial functions are handled here
 		INTCONbits.TMR0IF = FALSE; //      clear interrupt flag
 		WriteTimer0(timer0_off);
 
-		if (V.stop_tick != OFF) {
-			if (V.stop_tick > MAX_TICK)
-				V.stop_tick = MAX_TICK;
-			V.stop_tick--;
-		}
-
 		if ((++V.mod_count % 2) == 0) {
 			// check for spin motor movement
 			total_spins = V.spin_count0 + V.spin_count1;
 			if (total_spins >= RPM_COUNT) {
 				V.spinning = TRUE;
-				V.stop_tick = MAX_TICK;
-				if (V.motor_ramp < START_RAMP) {
-					V.motor_ramp++;
-					V.sample_freq = SAMPLEFREQ_S; // slower spin-up RPM signal to RDAC
-					WriteTimer1(V.sample_freq);
-					V.comm_state = 4;
-				} else {
-					V.sample_freq = SAMPLEFREQ; // normal RPM signal to RDAC
-					V.comm_state = 3;
-					if ((total_spins > V.max_freq) && (total_spins < SPIN_LIMIT_H)) V.max_freq = total_spins;
-					V.hi_rez_count = V.hi_rez;
-					V.hi_rez = 0;
-				}
+				V.sample_freq = SAMPLEFREQ;
+				V.comm_state = 3;
+				if ((total_spins > V.max_freq) && (total_spins < SPIN_LIMIT_H)) V.max_freq = total_spins;
 			} else {
-				if (V.stop_tick == OFF) {
-					V.spinning = FALSE;
-					V.motor_ramp = OFF;
-					RPMOUT = 0;
-					V.sample_freq = SAMPLEFREQ_S; // slowdown RPM signal to RDAC
-					V.comm_state = 2;
-					V.sleep_ticks++;
-				}
-				if (V.stop_tick >= STOP_RAMP) {
-					V.sample_freq = SAMPLEFREQ_S;
-					WriteTimer1(V.sample_freq);
-				}
+				V.spinning = FALSE;
+				V.comm_state = 2;
+				//				V.sleep_ticks++;
 			}
 			V.spin_count0 = 0;
 			V.spin_count1 = 0;
-
 		}
 
 		/* Start Led Blink Code */
@@ -250,6 +232,8 @@ void tm_handler(void) // timer/serial functions are handled here
 			led_cache = LEDS.out_byte;
 		}
 		/* End Led Blink Code */
+		V.led_pwm_set[1]++;
+		V.led_pwm_set[2]++;
 	}
 	/*
 	 * spurious interrupt handler
@@ -269,9 +253,11 @@ int16_t sw_work(void)
 		ClrWdt(); // reset watchdog
 
 	if (V.spinning) {
-		blink_led(1, ON, ON); // LED blink
+		blink_led(1, OFF, OFF); // LED off
+		blink_led(2, OFF, OFF); // LED off
 	} else {
-		blink_led(1, ON, OFF); // LED STEADY
+		blink_led(1, ON, ON); // LED blinks
+		blink_led(2, ON, ON); // LED blinks
 	}
 
 	if (V.comm) {
@@ -287,7 +273,7 @@ int16_t sw_work(void)
 			itoa(V.spin_count0 + V.spin_count1, str);
 			putsUSART(str);
 			putrsUSART(spacer0);
-			itoa(V.hi_rez_count, str);
+			itoa(V.max_freq, str);
 			putsUSART(str);
 			break;
 		case 4:
@@ -335,8 +321,8 @@ void init_fanmon(void)
 	/* interrupt priority ON */
 	RCONbits.IPEN = 1;
 	/* define I/O ports */
-	RMSPORTA = RMSPORT_IOA;
-	RMSPORTB = RMSPORT_IOB;
+	FANPORTA = FANPORT_IOA;
+	FANPORTB = FANPORT_IOB;
 
 	RPMOUT = LEDON; // preset all LEDS
 	LED1 = LEDON;
@@ -367,8 +353,8 @@ void init_fanmon(void)
 	PIE1bits.TMR1IE = 1; // enable int
 	IPR1bits.TMR1IP = 1; // make it high level
 
-	INTCONbits.INT0IE = 1; // enable RPM sensor input
-	INTCON3bits.INT1IE = 1; // enable RPM sensor input
+	INTCONbits.INT0IE = 1; // enable RPM sensor input fan1
+	INTCON3bits.INT2IE = 1; // enable RPM sensor input fan2
 	INTCON2bits.RBPU = 0; // enable weak pull-ups
 
 	init_fan_params();
@@ -381,15 +367,14 @@ uint8_t init_fan_params(void)
 {
 	V.spin_count0 = 0;
 	V.spin_count1 = 0;
-	V.stop_tick = 0;
-	V.motor_ramp = 0;
 	V.spinning = FALSE;
 	V.sample_freq = SAMPLEFREQ;
-	V.slew_freq = SAMPLEFREQ_R;
 	V.valid = TRUE;
 	V.spurious_int = 0;
 	V.comm = FALSE;
 	V.comm_state = 0;
+	V.led_pwm_set[1] = 128;
+	V.led_pwm_set[2] = 64;
 	putrsUSART(status1);
 	putrsUSART(build_date);
 	putrsUSART(spacer0);
@@ -409,7 +394,7 @@ uint8_t init_fan_params(void)
 void main(void)
 {
 	init_fanmon();
-	blink_led(2, ON, ON); // controller run indicator
+	blink_led(3, ON, ON); // controller run indicator
 
 	/* Loop forever */
 	while (TRUE) { // busy work

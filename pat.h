@@ -20,13 +20,14 @@ typedef signed long long int64_t;
 
 typedef struct V_data { // ISR data structure
 	uint16_t blink, blink_out, blink_alt, spin_count0, spin_count1, sample_freq, max_freq,
-	slew_freq, spurious_int, hi_rez, hi_rez_count;
+	spurious_int;
 	uint8_t valid : 1;
 	uint8_t comm : 1;
 	uint8_t comm_state, sleep_ticks;
 	uint8_t spinning : 1;
 	uint8_t boot_code : 1;
-	uint8_t stop_tick, motor_ramp, mod_count, rx_data, tx_data;
+	uint8_t mod_count, rx_data, tx_data;
+	uint8_t led_pwm[8],led_pwm_set[8];
 } V_data;
 
 typedef struct OUTBITS2 {
@@ -53,14 +54,12 @@ union Obits2 {
 #define	LEDOFF	1
 
 #define	TIMEROFFSET	44268		// timer0 16bit counter value for ~1 second to overflow 44268
-#define	SAMPLEFREQ	65266		// timer1 850hz
-#define	SAMPLEFREQ_S	64700		// timer1 300hz
-#define SAMPLEFREQ_R	62000		// timer1 rampup freq
+#define	SAMPLEFREQ	65466		// timer1 2.5khz
 
-#define RMSPORTA	TRISA
-#define RMSPORTB	TRISB
-#define RMSPORT_IOA	0b00000000		// all outputs RMS signal on 
-#define RMSPORT_IOB	0b00010001		// Rs-232 transmit on B1, receive on B4, hall gear sensor on B0
+#define FANPORTA	TRISA
+#define FANPORTB	TRISB
+#define FANPORT_IOA	0b00000000		// all outputs FAN signal on 
+#define FANPORT_IOB	0b00010101		// Rs-232 transmit on B1, receive on B4, fan sensors on B0,B2
 
 #define LED1		LATAbits.LATA1
 #define LED2		LATAbits.LATA2
