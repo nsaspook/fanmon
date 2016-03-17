@@ -368,6 +368,7 @@ void init_fanmon(void)
 	IPR1bits.TMR1IP = 1; // make it high level
 
 	INTCONbits.INT0IE = 1; // enable RPM sensor input
+	INTCON3bits.INT1IE = 1; // enable RPM sensor input
 	INTCON2bits.RBPU = 0; // enable weak pull-ups
 
 	init_fan_params();
