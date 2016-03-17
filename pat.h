@@ -52,7 +52,7 @@ union Obits2 {
 #define	LEDON	0   // logic low lights led
 #define	LEDOFF	1
 
-#define	TIMEROFFSET	20000		// timer0 16bit counter value for ~1 second to overflow 44268
+#define	TIMEROFFSET	44268		// timer0 16bit counter value for ~1 second to overflow 44268
 #define	SAMPLEFREQ	65266		// timer1 850hz
 #define	SAMPLEFREQ_S	64700		// timer1 300hz
 #define SAMPLEFREQ_R	62000		// timer1 rampup freq
@@ -74,12 +74,12 @@ union Obits2 {
 #define TACHIN		LATBbits.LATB0
 #define RPMLED		LATBbits.LATB5
 
-#define RPM_COUNT	2
+#define RPM_COUNT	45
 #define SLEEP_COUNT	30
 #define STOP_RAMP	1
 #define START_RAMP	1
 #define MAX_TICK	3
 #define MAX_SPURIOUS	10
-#define SPIN_LIMIT_H	10
+#define SPIN_LIMIT_H	120
 
 #endif 
