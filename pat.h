@@ -54,7 +54,7 @@ union Obits2 {
 #define	LEDOFF	1
 
 #define	TIMEROFFSET	44268		// timer0 16bit counter value for ~1 second to overflow 44268
-#define	SAMPLEFREQ	65466		// timer1 2.5khz
+#define	SAMPLEFREQ	65500		// timer1 3.9khz
 
 #define FANPORTA	TRISA
 #define FANPORTB	TRISB
