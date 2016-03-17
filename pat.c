@@ -145,13 +145,15 @@ void tm_handler(void) // timer/serial functions are handled here
 		if (LEDS.out_bits.b1 || TRUE) {
 			if (V.led_pwm[1]++ >= V.led_pwm_set[1])
 				LED1 = LEDON;
-			if (!V.led_pwm[1]) LED1 = LEDOFF; // LED OFF
+			if (!V.led_pwm[1]) 
+				LED1 = LEDOFF; // LED OFF
 		}
 
 		if (LEDS.out_bits.b2 || TRUE) {
 			if (V.led_pwm[2]++ >= V.led_pwm_set[2])
 				LED2 = LEDON;
-			if (!V.led_pwm[2]) LED2 = LEDOFF; // LED OFF
+			if (!V.led_pwm[2]) 
+				LED2 = LEDOFF; // LED OFF
 		}
 		RPMLED = !RPMLED;
 	}
@@ -198,6 +200,7 @@ void tm_handler(void) // timer/serial functions are handled here
 			if (V.blink & 0b01000000) LEDS.out_bits.b6 = !LEDS.out_bits.b6;
 			if (V.blink & 0b10000000) LEDS.out_bits.b7 = !LEDS.out_bits.b7;
 		}
+		
 		if (LEDS.out_byte != led_cache || TRUE) {
 			if (LEDS.out_bits.b1) {
 				LED1 = LEDON;
@@ -232,7 +235,7 @@ void tm_handler(void) // timer/serial functions are handled here
 			led_cache = LEDS.out_byte;
 		}
 		/* End Led Blink Code */
-		V.led_pwm_set[1]++;
+		V.led_pwm_set[1]++; // testing
 		V.led_pwm_set[2]++;
 	}
 	/*
@@ -256,8 +259,8 @@ int16_t sw_work(void)
 		blink_led(1, OFF, OFF); // LED off
 		blink_led(2, OFF, OFF); // LED off
 	} else {
-		blink_led(1, ON, ON); // LED blinks
-		blink_led(2, ON, ON); // LED blinks
+		blink_led(1, ON, OFF); // LED blinks
+		blink_led(2, ON, OFF); // LED blinks
 	}
 
 	if (V.comm) {
