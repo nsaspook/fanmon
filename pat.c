@@ -104,19 +104,20 @@ void tm_handler(void) // timer/serial functions are handled here
 	static uint8_t led_cache = 0xff;
 	static uint16_t total_spins = 0;
 
+	RPMLED = LEDON;
 	/* check for expected interrupts */
 	V.valid = FALSE;
 
 	if (INTCONbits.INT0IF) {
 		V.valid = TRUE;
 		INTCONbits.INT0IF = FALSE;
-		V.spin_count0++;
+		V.spin_count1++;
 	}
 
 	if (INTCON3bits.INT2IF) {
 		V.valid = TRUE;
 		INTCON3bits.INT2IF = FALSE;
-		V.spin_count1++;
+		V.spin_count2++;
 	}
 
 	if (PIR1bits.RCIF) { // is data from RS-232 port
@@ -157,32 +158,36 @@ void tm_handler(void) // timer/serial functions are handled here
 	}
 
 	if (INTCONbits.TMR0IF) { //      check timer0 irq time timer
+		RPMOUT=LEDON;
 		V.valid = TRUE;
 		INTCONbits.TMR0IF = FALSE; //      clear interrupt flag
 		WriteTimer0(timer0_off);
 
 		if ((++V.mod_count % 2) == 0) {
 			// check for fan motor movement
-			total_spins = V.spin_count0 + V.spin_count1;
+			total_spins = V.spin_count1 + V.spin_count2;
+			V.fan1_spinning = (V.spin_count1 >= FAN1_PULSE) ? TRUE : FALSE;
+			V.fan2_spinning = (V.spin_count2 >= FAN2_PULSE) ? TRUE : FALSE;
+
 			if (total_spins >= RPM_COUNT) {
 				V.spinning = TRUE;
 				V.comm_state = 3;
+				RELAY1 = DRIVEON;
 			} else {
 				V.spinning = FALSE;
 				V.comm_state = 2;
+				RELAY1 = DRIVEOFF;
 			}
-			V.spin_count0 = 0;
 			V.spin_count1 = 0;
+			V.spin_count2 = 0;
 		}
 
 		/* Start Led Blink Code */
 		if (V.blink_alt) {
-			if (V.blink & 0b00000001) LEDS.out_bits.b0 = !LEDS.out_bits.b0;
-			if (V.blink & 0b00000010) LEDS.out_bits.b1 = !LEDS.out_bits.b0;
-			if (V.blink & 0b00000100) LEDS.out_bits.b2 = !LEDS.out_bits.b2;
-			if (V.blink & 0b00001000) LEDS.out_bits.b3 = !LEDS.out_bits.b2;
+			if (V.blink & 0b00000010) LEDS.out_bits.b1 = !LEDS.out_bits.b1;
+			if (V.blink & 0b00000100) LEDS.out_bits.b2 = !LEDS.out_bits.b1;
+			if (V.blink & 0b00001000) LEDS.out_bits.b3 = !LEDS.out_bits.b3;
 		} else {
-			if (V.blink & 0b00000001) LEDS.out_bits.b0 = !LEDS.out_bits.b0;
 			if (V.blink & 0b00000010) LEDS.out_bits.b1 = !LEDS.out_bits.b1;
 			if (V.blink & 0b00000100) LEDS.out_bits.b2 = !LEDS.out_bits.b2;
 			if (V.blink & 0b00001000) LEDS.out_bits.b3 = !LEDS.out_bits.b3;
@@ -195,6 +200,7 @@ void tm_handler(void) // timer/serial functions are handled here
 			led_cache = LEDS.out_byte;
 		}
 		/* End Led Blink Code */
+		RPMOUT-LEDOFF;
 	}
 	/*
 	 * spurious interrupt handler
@@ -203,7 +209,7 @@ void tm_handler(void) // timer/serial functions are handled here
 		if (V.spurious_int++ > MAX_SPURIOUS)
 			Reset();
 	}
-
+	RPMLED = LEDOFF;
 }
 
 /* main loop routine */
@@ -231,7 +237,7 @@ int16_t sw_work(void)
 			break;
 		case 3:
 			putrsUSART(status3);
-			itoa(V.spin_count0 + V.spin_count1, str);
+			itoa(V.spin_count1 + V.spin_count2, str);
 			putsUSART(str);
 			putrsUSART(spacer0);
 			break;
@@ -274,13 +280,11 @@ void init_fanmon(void)
 	FANPORTA = FANPORT_IOA;
 	FANPORTB = FANPORT_IOB;
 
-	RPMOUT = LEDON; // preset all LEDS
-	LED1 = LEDON;
-	LED2 = LEDON;
-	LED3 = LEDON;
-	LED4 = LEDON;
-	LED5 = LEDON;
-	LED6 = LEDON;
+	RPMOUT = LEDOFF; // preset all LEDS
+	LED1 = LEDOFF;
+	LED2 = LEDOFF;
+	LED3 = LEDOFF;
+	RELAY1 = DRIVEOFF;
 	RPMLED = LEDON;
 	Blink_Init();
 	timer0_off = TIMEROFFSET; // blink fast
@@ -315,8 +319,8 @@ void init_fanmon(void)
 
 uint8_t init_fan_params(void)
 {
-	V.spin_count0 = 0;
 	V.spin_count1 = 0;
+	V.spin_count2 = 0;
 	V.spinning = FALSE;
 	V.valid = TRUE;
 	V.spurious_int = 0;
@@ -344,6 +348,7 @@ void main(void)
 {
 	init_fanmon();
 	blink_led(3, ON, ON); // controller run indicator
+	blink_led_alt(TRUE);
 
 	/* Loop forever */
 	while (TRUE) { // busy work

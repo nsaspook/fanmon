@@ -19,11 +19,13 @@ typedef signed long long int64_t;
 #endif
 
 typedef struct V_data { // ISR data structure
-	uint16_t blink, blink_out, blink_alt, spin_count0, spin_count1, spurious_int;
+	uint16_t blink, blink_out, blink_alt, spin_count1, spin_count2, spurious_int;
 	uint8_t valid : 1;
 	uint8_t comm : 1;
 	uint8_t comm_state;
 	uint8_t spinning : 1;
+	uint8_t fan1_spinning : 1;
+	uint8_t fan2_spinning : 1;
 	uint8_t boot_code : 1;
 	uint8_t mod_count, rx_data, tx_data;
 	uint8_t led_pwm[8], led_pwm_set[8];
@@ -65,20 +67,16 @@ union Obits2 {
 #define LED1		LATAbits.LATA1
 #define LED2		LATAbits.LATA2
 #define LED3		LATAbits.LATA3
-#define LED4		LATBbits.LATB6
-#define LED5		LATBbits.LATB7
-#define LED6		LATAbits.LATA6		
+#define RELAY1		LATBbits.LATB5	
 #define COMM_ENABLE	LATBbits.LATB3
 
 #define RPMOUT		LATAbits.LATA0
 #define TACHIN		LATBbits.LATB0
 #define RPMLED		LATBbits.LATB5
 
-#define RPM_COUNT	45
-#define SLEEP_COUNT	30
-#define STOP_RAMP	1
-#define START_RAMP	1
-#define MAX_TICK	3
+#define FAN1_PULSE	60
+#define FAN2_PULSE	60
+#define RPM_COUNT	FAN1_PULSE+FAN2_PULSE
 #define MAX_SPURIOUS	10
 #define SPIN_LIMIT_H	120
 
