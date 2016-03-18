@@ -76,17 +76,16 @@ volatile union Obits2 LEDS;
 int8_t str[12];
 #pragma udata access ACCESSBANK
 volatile uint16_t timer0_off = TIMEROFFSET;
-near uint16_t blink_speed;
 
 const far rom int8_t build_date[] = __DATE__, build_time[] = __TIME__;
 const far rom int8_t
 spacer0[] = " ",
 	spacer1[] = "\r\n",
 	status0[] = "\r\n OK ",
-	status1[] = "\r\n Booting RPM converter ",
-	status2[] = "\r\n RPMC waiting for signal ",
-	status3[] = "\r\n RPMC spinning normal ",
-	status4[] = "\r\n RPMC spinning low ",
+	status1[] = "\r\n Booting Dual Fan Monitor ",
+	status2[] = "\r\n FANC waiting for signal ",
+	status3[] = "\r\n FANC spinning normal ",
+	status4[] = "\r\n FANC spinning low ",
 	boot0[] = "\r\n Boot RCON ",
 	boot1[] = "\r\n Boot STKPTR ";
 
@@ -112,16 +111,12 @@ void tm_handler(void) // timer/serial functions are handled here
 		V.valid = TRUE;
 		INTCONbits.INT0IF = FALSE;
 		V.spin_count0++;
-		V.sleep_ticks = OFF;
-		//		RPMLED = !RPMLED;
 	}
 
 	if (INTCON3bits.INT2IF) {
 		V.valid = TRUE;
 		INTCON3bits.INT2IF = FALSE;
 		V.spin_count1++;
-		V.sleep_ticks = OFF;
-		//		RPMLED = !RPMLED;
 	}
 
 	if (PIR1bits.RCIF) { // is data from RS-232 port
@@ -138,7 +133,7 @@ void tm_handler(void) // timer/serial functions are handled here
 		V.valid = TRUE;
 
 		PIR1bits.TMR1IF = FALSE; //      clear int flag
-		WriteTimer1(V.sample_freq);
+		WriteTimer1(SAMPLEFREQ);
 
 		/* LED off at pwm value 0 and turn on at pwm_set */
 		if (LEDS.out_bits.b1) {
@@ -158,7 +153,7 @@ void tm_handler(void) // timer/serial functions are handled here
 		} else {
 			LED2 = DRIVEOFF; // LED OFF
 		}
-		RPMLED = !RPMLED;
+		//		RPMLED = !RPMLED;
 	}
 
 	if (INTCONbits.TMR0IF) { //      check timer0 irq time timer
@@ -167,17 +162,14 @@ void tm_handler(void) // timer/serial functions are handled here
 		WriteTimer0(timer0_off);
 
 		if ((++V.mod_count % 2) == 0) {
-			// check for spin motor movement
+			// check for fan motor movement
 			total_spins = V.spin_count0 + V.spin_count1;
 			if (total_spins >= RPM_COUNT) {
 				V.spinning = TRUE;
-				V.sample_freq = SAMPLEFREQ;
 				V.comm_state = 3;
-				if ((total_spins > V.max_freq) && (total_spins < SPIN_LIMIT_H)) V.max_freq = total_spins;
 			} else {
 				V.spinning = FALSE;
 				V.comm_state = 2;
-				//				V.sleep_ticks++;
 			}
 			V.spin_count0 = 0;
 			V.spin_count1 = 0;
@@ -189,52 +181,17 @@ void tm_handler(void) // timer/serial functions are handled here
 			if (V.blink & 0b00000010) LEDS.out_bits.b1 = !LEDS.out_bits.b0;
 			if (V.blink & 0b00000100) LEDS.out_bits.b2 = !LEDS.out_bits.b2;
 			if (V.blink & 0b00001000) LEDS.out_bits.b3 = !LEDS.out_bits.b2;
-			if (V.blink & 0b00010000) LEDS.out_bits.b4 = !LEDS.out_bits.b4;
-			if (V.blink & 0b00100000) LEDS.out_bits.b5 = !LEDS.out_bits.b4;
-			if (V.blink & 0b01000000) LEDS.out_bits.b6 = !LEDS.out_bits.b6;
-			if (V.blink & 0b10000000) LEDS.out_bits.b7 = !LEDS.out_bits.b6;
 		} else {
 			if (V.blink & 0b00000001) LEDS.out_bits.b0 = !LEDS.out_bits.b0;
 			if (V.blink & 0b00000010) LEDS.out_bits.b1 = !LEDS.out_bits.b1;
 			if (V.blink & 0b00000100) LEDS.out_bits.b2 = !LEDS.out_bits.b2;
 			if (V.blink & 0b00001000) LEDS.out_bits.b3 = !LEDS.out_bits.b3;
-			if (V.blink & 0b00010000) LEDS.out_bits.b4 = !LEDS.out_bits.b4;
-			if (V.blink & 0b00100000) LEDS.out_bits.b5 = !LEDS.out_bits.b5;
-			if (V.blink & 0b01000000) LEDS.out_bits.b6 = !LEDS.out_bits.b6;
-			if (V.blink & 0b10000000) LEDS.out_bits.b7 = !LEDS.out_bits.b7;
 		}
 
-		if (LEDS.out_byte != led_cache || TRUE) {
-			if (LEDS.out_bits.b1) {
-				LED1 = LEDON;
-			} else {
-				LED1 = LEDOFF; // LED OFF
-			}
-			if (LEDS.out_bits.b2) {
-				LED2 = LEDON;
-			} else {
-				LED2 = LEDOFF; // LED OFF
-			}
-			if (LEDS.out_bits.b3) {
-				LED3 = LEDON;
-			} else {
-				LED3 = LEDOFF; // LED OFF
-			}
-			if (LEDS.out_bits.b4) {
-				LED4 = LEDON;
-			} else {
-				LED4 = LEDOFF; // LED OFF
-			}
-			if (LEDS.out_bits.b5) {
-				LED5 = LEDON;
-			} else {
-				LED5 = LEDOFF; // LED OFF
-			}
-			if (LEDS.out_bits.b6) {
-				LED6 = LEDON;
-			} else {
-				LED6 = LEDOFF; // LED OFF
-			}
+		if (LEDS.out_byte != led_cache) {
+			LED1 = LEDS.out_bits.b1 ? LEDON : LEDOFF;
+			LED2 = LEDS.out_bits.b2 ? LEDON : LEDOFF;
+			LED3 = LEDS.out_bits.b3 ? LEDON : LEDOFF;
 			led_cache = LEDS.out_byte;
 		}
 		/* End Led Blink Code */
@@ -261,7 +218,7 @@ int16_t sw_work(void)
 		blink_led(2, OFF, OFF); // LED off
 	} else {
 		blink_led(1, ON, ON); // LED blinks
-		blink_led(2, ON, OFF); // LED blinks
+		blink_led(2, ON, ON); // LED blinks
 	}
 
 	if (V.comm) {
@@ -277,8 +234,6 @@ int16_t sw_work(void)
 			itoa(V.spin_count0 + V.spin_count1, str);
 			putsUSART(str);
 			putrsUSART(spacer0);
-			itoa(V.max_freq, str);
-			putsUSART(str);
 			break;
 		case 4:
 			putrsUSART(status4);
@@ -288,21 +243,9 @@ int16_t sw_work(void)
 			break;
 		}
 		V.comm = FALSE;
-		V.sleep_ticks = 0;
-	}
-	/*
-	 * shutdown the controller if nothing is happening
-	 */
-	if (V.sleep_ticks > SLEEP_COUNT) {
-		LED1 = 0;
-		LED2 = 0;
-		RPMLED = 0;
-		OSCCON = 0x00; // sleep, no clocks
-		Sleep();
-		OSCCON = 0x72;
 	}
 
-	V.led_pwm_set[1]++; // testing
+	V.led_pwm_set[1]++; // testing with sweep
 	V.led_pwm_set[2]++;
 
 	return 0;
@@ -375,7 +318,6 @@ uint8_t init_fan_params(void)
 	V.spin_count0 = 0;
 	V.spin_count1 = 0;
 	V.spinning = FALSE;
-	V.sample_freq = SAMPLEFREQ;
 	V.valid = TRUE;
 	V.spurious_int = 0;
 	V.comm = FALSE;

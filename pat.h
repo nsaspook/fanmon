@@ -19,11 +19,10 @@ typedef signed long long int64_t;
 #endif
 
 typedef struct V_data { // ISR data structure
-	uint16_t blink, blink_out, blink_alt, spin_count0, spin_count1, sample_freq, max_freq,
-	spurious_int;
+	uint16_t blink, blink_out, blink_alt, spin_count0, spin_count1, spurious_int;
 	uint8_t valid : 1;
 	uint8_t comm : 1;
-	uint8_t comm_state, sleep_ticks;
+	uint8_t comm_state;
 	uint8_t spinning : 1;
 	uint8_t boot_code : 1;
 	uint8_t mod_count, rx_data, tx_data;
