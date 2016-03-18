@@ -140,18 +140,23 @@ void tm_handler(void) // timer/serial functions are handled here
 		PIR1bits.TMR1IF = FALSE; //      clear int flag
 		WriteTimer1(V.sample_freq);
 
+		/* LED off at pwm value 0 and turn on at pwm_set */
 		if (LEDS.out_bits.b1) {
 			if (V.led_pwm[1]++ >= V.led_pwm_set[1])
-				LED1 = LEDON;
+				LED1 = DRIVEON;
 			if (!V.led_pwm[1])
-				LED1 = LEDOFF; // LED OFF
+				LED1 = DRIVEOFF; // LED OFF
+		} else {
+			LED1 = DRIVEOFF; // LED OFF
 		}
 
 		if (LEDS.out_bits.b2) {
 			if (V.led_pwm[2]++ >= V.led_pwm_set[2])
-				LED2 = LEDON;
+				LED2 = DRIVEON;
 			if (!V.led_pwm[2])
-				LED2 = LEDOFF; // LED OFF
+				LED2 = DRIVEOFF; // LED OFF
+		} else {
+			LED2 = DRIVEOFF; // LED OFF
 		}
 		RPMLED = !RPMLED;
 	}
@@ -256,7 +261,7 @@ int16_t sw_work(void)
 		blink_led(2, OFF, OFF); // LED off
 	} else {
 		blink_led(1, ON, ON); // LED blinks
-		blink_led(2, ON, ON); // LED blinks
+		blink_led(2, ON, OFF); // LED blinks
 	}
 
 	if (V.comm) {

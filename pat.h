@@ -27,7 +27,7 @@ typedef struct V_data { // ISR data structure
 	uint8_t spinning : 1;
 	uint8_t boot_code : 1;
 	uint8_t mod_count, rx_data, tx_data;
-	uint8_t led_pwm[8],led_pwm_set[8];
+	uint8_t led_pwm[8], led_pwm_set[8];
 } V_data;
 
 typedef struct OUTBITS2 {
@@ -50,8 +50,10 @@ union Obits2 {
 #define FALSE	0
 #define	ON	1
 #define	OFF	0
-#define	LEDON	0   // logic low lights led
+#define	LEDON	0	// sink LED ON
 #define	LEDOFF	1
+#define DRIVEON		0	// pwm LED on/OFF states
+#define DRIVEOFF	1
 
 #define	TIMEROFFSET	44268		// timer0 16bit counter value for ~1 second to overflow 44268
 #define	SAMPLEFREQ	65500		// timer1 3.9khz
