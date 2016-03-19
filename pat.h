@@ -27,7 +27,7 @@ typedef struct V_data { // ISR data structure
 	uint8_t fan1_spinning : 1;
 	uint8_t fan2_spinning : 1;
 	uint8_t boot_code : 1;
-	uint8_t mod_count, rx_data, tx_data;
+	uint8_t rx_data, tx_data;
 	uint8_t led_pwm[8], led_pwm_set[8];
 } V_data;
 
@@ -56,28 +56,29 @@ union Obits2 {
 #define DRIVEON		0	// pwm LED on/OFF states
 #define DRIVEOFF	1
 
-#define	TIMEROFFSET	44268		// timer0 16bit counter value for ~1 second to overflow 44268
+#define	TIMEROFFSET	49400		// timer0 16bit counter value for ~0.5 second to overflow 49400
 #define	SAMPLEFREQ	65500		// timer1 3.9khz
 
 #define FANPORTA	TRISA
 #define FANPORTB	TRISB
-#define FANPORT_IOA	0b00000000		// all outputs FAN signal on 
+#define FANPORT_IOA	0b00000000		// all outputs
 #define FANPORT_IOB	0b00010101		// Rs-232 transmit on B1, receive on B4, fan sensors on B0,B2
 
 #define LED1		LATAbits.LATA1
 #define LED2		LATAbits.LATA2
 #define LED3		LATAbits.LATA3
-#define RELAY1		LATBbits.LATB5	
+#define RELAY1		LATAbits.LATA7	
 #define COMM_ENABLE	LATBbits.LATB3
 
 #define RPMOUT		LATAbits.LATA0
 #define TACHIN		LATBbits.LATB0
 #define RPMLED		LATBbits.LATB5
 
-#define FAN1_PULSE	60
-#define FAN2_PULSE	60
+/* the ebmpapst 4606 ZH fan is ~52hz at full speed */
+#define RPM_X_FACTOR	2
+#define FAN1_PULSE	50/RPM_X_FACTOR
+#define FAN2_PULSE	50/RPM_X_FACTOR
 #define RPM_COUNT	FAN1_PULSE+FAN2_PULSE
 #define MAX_SPURIOUS	10
-#define SPIN_LIMIT_H	120
 
 #endif 

@@ -54,6 +54,7 @@
  * std input 52hz at full speed 
  * Version
  * 0.1  detect pulses and flash fan failure lamps if RPM is out of spec
+ *	for the ebmpapst 4606 ZH
  */
 
 #include <timers.h>
@@ -158,29 +159,27 @@ void tm_handler(void) // timer/serial functions are handled here
 	}
 
 	if (INTCONbits.TMR0IF) { //      check timer0 irq time timer
-		RPMOUT=LEDON;
+		RPMOUT = !RPMOUT;
 		V.valid = TRUE;
 		INTCONbits.TMR0IF = FALSE; //      clear interrupt flag
 		WriteTimer0(timer0_off);
 
-		if ((++V.mod_count % 2) == 0) {
-			// check for fan motor movement
-			total_spins = V.spin_count1 + V.spin_count2;
-			V.fan1_spinning = (V.spin_count1 >= FAN1_PULSE) ? TRUE : FALSE;
-			V.fan2_spinning = (V.spin_count2 >= FAN2_PULSE) ? TRUE : FALSE;
+		// check for fan motor movement
+		total_spins = V.spin_count1 + V.spin_count2;
+		V.fan1_spinning = (V.spin_count1 >= FAN1_PULSE) ? TRUE : FALSE;
+		V.fan2_spinning = (V.spin_count2 >= FAN2_PULSE) ? TRUE : FALSE;
 
-			if (total_spins >= RPM_COUNT) {
-				V.spinning = TRUE;
-				V.comm_state = 3;
-				RELAY1 = DRIVEON;
-			} else {
-				V.spinning = FALSE;
-				V.comm_state = 2;
-				RELAY1 = DRIVEOFF;
-			}
-			V.spin_count1 = 0;
-			V.spin_count2 = 0;
+		if (total_spins >= RPM_COUNT) {
+			V.spinning = TRUE;
+			V.comm_state = 3;
+			RELAY1 = DRIVEOFF;
+		} else {
+			V.spinning = FALSE;
+			V.comm_state = 2;
+			RELAY1 = DRIVEON;
 		}
+		V.spin_count1 = 0;
+		V.spin_count2 = 0;
 
 		/* Start Led Blink Code */
 		if (V.blink_alt) {
@@ -200,7 +199,6 @@ void tm_handler(void) // timer/serial functions are handled here
 			led_cache = LEDS.out_byte;
 		}
 		/* End Led Blink Code */
-		RPMOUT-LEDOFF;
 	}
 	/*
 	 * spurious interrupt handler
