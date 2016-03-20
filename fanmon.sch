@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.6.0">
+<eagle version="7.5.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -6726,10 +6726,21 @@ Grid 2.54 mm&lt;p&gt;
 <part name="X5" library="con-molex" deviceset="22-23-2041" device=""/>
 <part name="SV1" library="con-lstb" deviceset="MA06-1" device=""/>
 <part name="X6" library="con-phoenix-254" deviceset="MPT2" device=""/>
+<part name="R6" library="resistor" deviceset="R-US_" device="0204/2V" value="4.7k"/>
+<part name="R7" library="resistor" deviceset="R-US_" device="0204/2V" value="4.7k"/>
+<part name="VDD2" library="supply1" deviceset="VDD" device=""/>
+<part name="VDD3" library="supply1" deviceset="VDD" device=""/>
 </parts>
 <sheets>
 <sheet>
 <plain>
+<text x="106.68" y="55.88" size="1.778" layer="91">Rotation sensor inputs</text>
+<text x="-50.8" y="53.34" size="1.778" layer="91">Rotation sensor power</text>
+<text x="-12.7" y="-20.32" size="1.778" layer="91">Fan run LED output</text>
+<text x="48.26" y="-20.32" size="1.778" layer="91">Fan run LED output</text>
+<text x="106.68" y="-22.86" size="1.778" layer="91">Fan alarm relay</text>
+<text x="7.62" y="38.1" size="1.778" layer="91">power led</text>
+<text x="-40.64" y="-7.62" size="1.778" layer="91">ICSP</text>
 </plain>
 <instances>
 <instance part="IC1" gate="G$1" x="71.12" y="43.18"/>
@@ -6780,6 +6791,10 @@ Grid 2.54 mm&lt;p&gt;
 <instance part="SV1" gate="1" x="-40.64" y="7.62"/>
 <instance part="X6" gate="-1" x="-20.32" y="60.96" rot="R90"/>
 <instance part="X6" gate="-2" x="-40.64" y="38.1" rot="R180"/>
+<instance part="R6" gate="G$1" x="111.76" y="58.42" rot="R90"/>
+<instance part="R7" gate="G$1" x="111.76" y="43.18" rot="R90"/>
+<instance part="VDD2" gate="G$1" x="111.76" y="66.04"/>
+<instance part="VDD3" gate="G$1" x="111.76" y="35.56" rot="R180"/>
 </instances>
 <busses>
 </busses>
@@ -6915,6 +6930,14 @@ Grid 2.54 mm&lt;p&gt;
 <junction x="-25.4" y="2.54"/>
 <junction x="-33.02" y="2.54"/>
 </segment>
+<segment>
+<pinref part="R6" gate="G$1" pin="2"/>
+<pinref part="VDD2" gate="G$1" pin="VDD"/>
+</segment>
+<segment>
+<pinref part="R7" gate="G$1" pin="1"/>
+<pinref part="VDD3" gate="G$1" pin="VDD"/>
+</segment>
 </net>
 <net name="VSS" class="0">
 <segment>
@@ -6977,6 +7000,8 @@ Grid 2.54 mm&lt;p&gt;
 <junction x="114.3" y="50.8"/>
 <wire x1="99.06" y1="50.8" x2="114.3" y2="50.8" width="0.1524" layer="91"/>
 <junction x="99.06" y="50.8"/>
+<pinref part="R6" gate="G$1" pin="1"/>
+<junction x="111.76" y="53.34"/>
 </segment>
 </net>
 <net name="N$7" class="0">
@@ -6990,6 +7015,8 @@ Grid 2.54 mm&lt;p&gt;
 <junction x="114.3" y="45.72"/>
 <wire x1="99.06" y1="45.72" x2="114.3" y2="45.72" width="0.1524" layer="91"/>
 <junction x="99.06" y="45.72"/>
+<pinref part="R7" gate="G$1" pin="2"/>
+<junction x="111.76" y="48.26"/>
 </segment>
 </net>
 <net name="N$10" class="0">
